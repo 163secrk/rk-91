@@ -1,0 +1,82 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f5f5;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.page-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.search-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.form-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.detail-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 16px;
+}
+
+.card-margin {
+  margin-bottom: 20px;
+}
+
+.coordinate-display {
+  display: flex;
+  gap: 24px;
+}
+
+.coord-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coord-label {
+  font-weight: 600;
+  color: #606266;
+}
+
+.coord-value {
+  font-family: 'Courier New', monospace;
+  color: #409eff;
+  font-size: 16px;
+}

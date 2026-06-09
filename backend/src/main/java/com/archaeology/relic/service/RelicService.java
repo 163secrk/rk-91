@@ -106,4 +106,20 @@ public class RelicService {
     public void deleteRestorationRecord(Long recordId) {
         restorationRecordRepository.deleteById(recordId);
     }
+
+    public List<Object[]> countByCategory() {
+        return relicRepository.countByCategory();
+    }
+
+    public List<Object[]> countByEra() {
+        return relicRepository.countByEra();
+    }
+
+    public List<Object[]> countByMaterial() {
+        return relicRepository.countByMaterial();
+    }
+
+    public List<Object[]> countByPreservationStatus() {
+        return relicRepository.countByPreservationStatus();
+    }
 }

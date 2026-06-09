@@ -9,10 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vicons/antd": "^0.13.0",
     "axios": "^1.6.0",
     "date-fns": "^3.0.0",
+    "echarts": "^6.1.0",
     "naive-ui": "^2.38.0",
     "vue": "^3.4.0",
+    "vue-echarts": "^8.0.1",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {

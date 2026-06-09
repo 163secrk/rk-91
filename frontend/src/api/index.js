@@ -17,7 +17,8 @@ export const relicApi = {
   deleteRelic: (id) => api.delete(`/relics/${id}`),
   getRestorationRecords: (relicId) => api.get(`/relics/${relicId}/restoration-records`),
   addRestorationRecord: (relicId, data) => api.post(`/relics/${relicId}/restoration-records`, data),
-  deleteRestorationRecord: (recordId) => api.delete(`/relics/restoration-records/${recordId}`)
+  deleteRestorationRecord: (recordId) => api.delete(`/relics/restoration-records/${recordId}`),
+  getStatistics: () => api.get('/relics/statistics')
 }
 
 export default api

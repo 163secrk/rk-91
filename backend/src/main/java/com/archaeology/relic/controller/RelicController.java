@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/relics")
@@ -86,5 +88,56 @@ public class RelicController {
     public ResponseEntity<Void> deleteRestorationRecord(@PathVariable Long recordId) {
         relicService.deleteRestorationRecord(recordId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Object>> getStatistics() {
+        Map<String, Object> result = new HashMap<>();
+
+        List<Map<String, Object>> categoryStats = relicService.countByCategory().stream()
+                .map(arr -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("name", arr[0] != null ? arr[0].toString() : "未分类");
+                    map.put("value", ((Number) arr[1]).longValue());
+                    return map;
+                })
+                .toList();
+
+        List<Map<String, Object>> eraStats = relicService.countByEra().stream()
+                .map(arr -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("name", arr[0] != null ? arr[0].toString() : "未知年代");
+                    map.put("value", ((Number) arr[1]).longValue());
+                    return map;
+                })
+                .toList();
+
+        List<Map<String, Object>> materialStats = relicService.countByMaterial().stream()
+                .map(arr -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("name", arr[0] != null ? arr[0].toString() : "未知材质");
+                    map.put("value", ((Number) arr[1]).longValue());
+                    return map;
+                })
+                .toList();
+
+        List<Map<String, Object>> statusStats = relicService.countByPreservationStatus().stream()
+                .map(arr -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("name", arr[0] != null ? arr[0].toString() : "未知状态");
+                    map.put("value", ((Number) arr[1]).longValue());
+                    return map;
+                })
+                .toList();
+
+        long total = categoryStats.stream().mapToLong(m -> (Long) m.get("value")).sum();
+
+        result.put("total", total);
+        result.put("byCategory", categoryStats);
+        result.put("byEra", eraStats);
+        result.put("byMaterial", materialStats);
+        result.put("byPreservationStatus", statusStats);
+
+        return ResponseEntity.ok(result);
     }
 }

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import RelicList from '../views/RelicList.vue'
 import RelicForm from '../views/RelicForm.vue'
 import RelicDetail from '../views/RelicDetail.vue'
+import RelicDashboard from '../views/RelicDashboard.vue'
 
 const routes = [
   {
@@ -12,6 +13,11 @@ const routes = [
     path: '/relics',
     name: 'RelicList',
     component: RelicList
+  },
+  {
+    path: '/dashboard',
+    name: 'RelicDashboard',
+    component: RelicDashboard
   },
   {
     path: '/relics/new',

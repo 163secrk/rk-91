@@ -8,6 +8,9 @@
             <n-button @click="goHome" quaternary>
               遗物列表
             </n-button>
+            <n-button @click="goDashboard" quaternary>
+              统计看板
+            </n-button>
           </div>
         </div>
       </div>
@@ -23,6 +26,10 @@ const router = useRouter()
 
 const goHome = () => {
   router.push('/relics')
+}
+
+const goDashboard = () => {
+  router.push('/dashboard')
 }
 </script>
 

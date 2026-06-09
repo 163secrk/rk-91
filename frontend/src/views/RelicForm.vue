@@ -87,6 +87,16 @@
               </n-form-item>
             </n-grid-item>
             <n-grid-item>
+              <n-form-item label="所属探方">
+                <n-select
+                  v-model:value="formData.excavationUnitId"
+                  :options="excavationUnitOptions"
+                  placeholder="请选择所属探方"
+                  clearable
+                />
+              </n-form-item>
+            </n-grid-item>
+            <n-grid-item>
               <n-form-item label="地层">
                 <n-input v-model:value="formData.stratum" placeholder="请输入地层信息" />
               </n-form-item>
@@ -167,7 +177,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useMessage } from 'naive-ui'
 import { useRouter, useRoute } from 'vue-router'
-import { relicApi } from '../api'
+import { relicApi, excavationUnitApi } from '../api'
 
 const router = useRouter()
 const route = useRoute()
@@ -175,8 +185,21 @@ const message = useMessage()
 
 const formRef = ref(null)
 const submitting = ref(false)
+const excavationUnitOptions = ref([])
 
 const isEdit = computed(() => !!route.params.id)
+
+const loadExcavationUnits = async () => {
+  try {
+    const res = await excavationUnitApi.getAllUnits()
+    excavationUnitOptions.value = res.data.map(unit => ({
+      label: `${unit.unitNo} - ${unit.location || '未设置位置'}`,
+      value: unit.id
+    }))
+  } catch (e) {
+    message.error('加载探方列表失败')
+  }
+}
 
 const categoryOptions = [
   { label: '陶器', value: '陶器' },
@@ -251,6 +274,7 @@ const formData = reactive({
   excavator: '',
   excavationSite: '',
   stratum: '',
+  excavationUnitId: null,
   preservationStatus: '',
   coordinate: {
     x: 0,
@@ -303,6 +327,7 @@ const goBack = () => {
 }
 
 onMounted(() => {
+  loadExcavationUnits()
   if (isEdit.value) {
     loadRelic(route.params.id)
   }

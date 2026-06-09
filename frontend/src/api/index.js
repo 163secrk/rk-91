@@ -21,4 +21,15 @@ export const relicApi = {
   getStatistics: () => api.get('/relics/statistics')
 }
 
+export const excavationUnitApi = {
+  getAllUnits: () => api.get('/excavation-units'),
+  getUnitById: (id) => api.get(`/excavation-units/${id}`),
+  searchUnits: (params) => api.get('/excavation-units/search', { params }),
+  createUnit: (data) => api.post('/excavation-units', data),
+  updateUnit: (id, data) => api.put(`/excavation-units/${id}`, data),
+  deleteUnit: (id) => api.delete(`/excavation-units/${id}`),
+  getUnitRelics: (id) => api.get(`/excavation-units/${id}/relics`),
+  getStatistics: () => api.get('/excavation-units/statistics')
+}
+
 export default api

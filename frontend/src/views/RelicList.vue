@@ -38,7 +38,7 @@
 import { ref, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
-import { relicApi } from '../api'
+import { relicApi, excavationUnitApi } from '../api'
 import { format } from 'date-fns'
 
 const router = useRouter()
@@ -49,6 +49,7 @@ const relics = ref([])
 const loading = ref(false)
 const searchField = ref('name')
 const searchKeyword = ref('')
+const excavationUnitMap = ref({})
 
 const searchOptions = [
   { label: '名称', value: 'name' },
@@ -61,6 +62,19 @@ const pagination = ref({
   showSizePicker: true,
   pageSizes: [10, 20, 50]
 })
+
+const loadExcavationUnits = async () => {
+  try {
+    const res = await excavationUnitApi.getAllUnits()
+    const map = {}
+    res.data.forEach(unit => {
+      map[unit.id] = unit.unitNo
+    })
+    excavationUnitMap.value = map
+  } catch (e) {
+    console.error('加载探方列表失败', e)
+  }
+}
 
 const columns = [
   {
@@ -82,6 +96,17 @@ const columns = [
     title: '年代',
     key: 'era',
     width: 120
+  },
+  {
+    title: '所属探方',
+    key: 'excavationUnitId',
+    width: 120,
+    render: (row) => {
+      if (row.excavationUnitId && excavationUnitMap.value[row.excavationUnitId]) {
+        return excavationUnitMap.value[row.excavationUnitId]
+      }
+      return '-'
+    }
   },
   {
     title: '材质',
@@ -209,6 +234,7 @@ const goToDetail = (id) => {
 }
 
 onMounted(() => {
+  loadExcavationUnits()
   loadRelics()
 })
 </script>

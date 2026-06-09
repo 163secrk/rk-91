@@ -3,6 +3,8 @@ import RelicList from '../views/RelicList.vue'
 import RelicForm from '../views/RelicForm.vue'
 import RelicDetail from '../views/RelicDetail.vue'
 import RelicDashboard from '../views/RelicDashboard.vue'
+import ExcavationUnitList from '../views/ExcavationUnitList.vue'
+import ExcavationUnitForm from '../views/ExcavationUnitForm.vue'
 
 const routes = [
   {
@@ -13,6 +15,22 @@ const routes = [
     path: '/relics',
     name: 'RelicList',
     component: RelicList
+  },
+  {
+    path: '/excavation-units',
+    name: 'ExcavationUnitList',
+    component: ExcavationUnitList
+  },
+  {
+    path: '/excavation-units/new',
+    name: 'ExcavationUnitCreate',
+    component: ExcavationUnitForm
+  },
+  {
+    path: '/excavation-units/:id/edit',
+    name: 'ExcavationUnitEdit',
+    component: ExcavationUnitForm,
+    props: true
   },
   {
     path: '/dashboard',

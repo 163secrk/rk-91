@@ -30,6 +30,7 @@
             <n-descriptions-item label="出土日期">{{ formatDate(relic.excavateDate) }}</n-descriptions-item>
             <n-descriptions-item label="发掘人员">{{ relic.excavator || '-' }}</n-descriptions-item>
             <n-descriptions-item label="出土地点">{{ relic.excavationSite || '-' }}</n-descriptions-item>
+            <n-descriptions-item label="所属探方">{{ getExcavationUnitDisplay() }}</n-descriptions-item>
             <n-descriptions-item label="地层">{{ relic.stratum || '-' }}</n-descriptions-item>
             <n-descriptions-item label="登记时间">{{ formatDate(relic.createTime) }}</n-descriptions-item>
             <n-descriptions-item label="描述" :span="2">{{ relic.description || '-' }}</n-descriptions-item>
@@ -161,7 +162,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useMessage, useDialog } from 'naive-ui'
 import { useRouter, useRoute } from 'vue-router'
-import { relicApi } from '../api'
+import { relicApi, excavationUnitApi } from '../api'
 import { format } from 'date-fns'
 
 const router = useRouter()
@@ -175,6 +176,7 @@ const restorationRecords = ref([])
 const showAddModal = ref(false)
 const restorationFormRef = ref(null)
 const submitting = ref(false)
+const excavationUnitMap = ref({})
 
 const statusType = computed(() => {
   const map = {
@@ -210,6 +212,26 @@ const formatDate = (dateStr) => {
   } catch (e) {
     return dateStr
   }
+}
+
+const loadExcavationUnits = async () => {
+  try {
+    const res = await excavationUnitApi.getAllUnits()
+    const map = {}
+    res.data.forEach(unit => {
+      map[unit.id] = unit.unitNo
+    })
+    excavationUnitMap.value = map
+  } catch (e) {
+    console.error('加载探方列表失败', e)
+  }
+}
+
+const getExcavationUnitDisplay = () => {
+  if (relic.value.excavationUnitId && excavationUnitMap.value[relic.value.excavationUnitId]) {
+    return excavationUnitMap.value[relic.value.excavationUnitId]
+  }
+  return '-'
 }
 
 const loadRelicDetail = async () => {
@@ -291,6 +313,7 @@ const goToEdit = () => {
 }
 
 onMounted(() => {
+  loadExcavationUnits()
   loadRelicDetail()
 })
 </script>

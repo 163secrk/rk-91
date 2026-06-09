@@ -1,5 +1,6 @@
 package com.archaeology.relic.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 
@@ -50,6 +51,14 @@ public class Relic {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "coordinate_id", referencedColumnName = "id")
     private Coordinate3D coordinate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "excavation_unit_id")
+    @JsonBackReference
+    private ExcavationUnit excavationUnit;
+
+    @Transient
+    private Long excavationUnitId;
 
     @Column(length = 50)
     private String preservationStatus;

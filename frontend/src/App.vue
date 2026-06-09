@@ -8,6 +8,9 @@
             <n-button @click="goHome" quaternary>
               遗物列表
             </n-button>
+            <n-button @click="goUnits" quaternary>
+              探方管理
+            </n-button>
             <n-button @click="goDashboard" quaternary>
               统计看板
             </n-button>
@@ -26,6 +29,10 @@ const router = useRouter()
 
 const goHome = () => {
   router.push('/relics')
+}
+
+const goUnits = () => {
+  router.push('/excavation-units')
 }
 
 const goDashboard = () => {

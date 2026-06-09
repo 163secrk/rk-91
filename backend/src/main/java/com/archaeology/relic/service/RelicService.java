@@ -1,8 +1,10 @@
 package com.archaeology.relic.service;
 
 import com.archaeology.relic.entity.Coordinate3D;
+import com.archaeology.relic.entity.ExcavationUnit;
 import com.archaeology.relic.entity.Relic;
 import com.archaeology.relic.entity.RestorationRecord;
+import com.archaeology.relic.repository.ExcavationUnitRepository;
 import com.archaeology.relic.repository.RelicRepository;
 import com.archaeology.relic.repository.RestorationRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class RelicService {
@@ -21,24 +24,44 @@ public class RelicService {
     @Autowired
     private RestorationRecordRepository restorationRecordRepository;
 
+    @Autowired
+    private ExcavationUnitRepository excavationUnitRepository;
+
     public List<Relic> findAll() {
-        return relicRepository.findAll();
+        return relicRepository.findAll().stream()
+                .peek(this::setExcavationUnitId)
+                .collect(Collectors.toList());
     }
 
     public Optional<Relic> findById(Long id) {
-        return relicRepository.findById(id);
+        return relicRepository.findById(id).map(relic -> {
+            setExcavationUnitId(relic);
+            return relic;
+        });
+    }
+
+    private void setExcavationUnitId(Relic relic) {
+        if (relic.getExcavationUnit() != null) {
+            relic.setExcavationUnitId(relic.getExcavationUnit().getId());
+        }
     }
 
     public List<Relic> searchByName(String name) {
-        return relicRepository.findByNameContainingIgnoreCase(name);
+        return relicRepository.findByNameContainingIgnoreCase(name).stream()
+                .peek(this::setExcavationUnitId)
+                .collect(Collectors.toList());
     }
 
     public List<Relic> searchByRelicNo(String relicNo) {
-        return relicRepository.findByRelicNoContainingIgnoreCase(relicNo);
+        return relicRepository.findByRelicNoContainingIgnoreCase(relicNo).stream()
+                .peek(this::setExcavationUnitId)
+                .collect(Collectors.toList());
     }
 
     public List<Relic> searchByCategory(String category) {
-        return relicRepository.findByCategoryContainingIgnoreCase(category);
+        return relicRepository.findByCategoryContainingIgnoreCase(category).stream()
+                .peek(this::setExcavationUnitId)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -50,7 +73,13 @@ public class RelicService {
             coord.setZ(0.0);
             relic.setCoordinate(coord);
         }
-        return relicRepository.save(relic);
+        if (relic.getExcavationUnitId() != null) {
+            excavationUnitRepository.findById(relic.getExcavationUnitId())
+                    .ifPresent(relic::setExcavationUnit);
+        }
+        Relic saved = relicRepository.save(relic);
+        setExcavationUnitId(saved);
+        return saved;
     }
 
     @Transactional
@@ -81,7 +110,16 @@ public class RelicService {
                 }
             }
 
-            return relicRepository.save(relic);
+            if (relicDetails.getExcavationUnitId() != null) {
+                excavationUnitRepository.findById(relicDetails.getExcavationUnitId())
+                        .ifPresent(relic::setExcavationUnit);
+            } else {
+                relic.setExcavationUnit(null);
+            }
+
+            Relic updated = relicRepository.save(relic);
+            setExcavationUnitId(updated);
+            return updated;
         }).orElseThrow(() -> new RuntimeException("Relic not found with id: " + id));
     }
 

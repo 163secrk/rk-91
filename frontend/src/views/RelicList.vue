@@ -35,8 +35,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, useMessage, useDialog } from 'vue'
+import { ref, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
+import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
 import { relicApi } from '../api'
 import { format } from 'date-fns'
 
@@ -105,7 +106,7 @@ const columns = [
         '已修复': { type: 'info', text: '已修复' }
       }
       const status = statusMap[row.preservationStatus] || { type: 'default', text: row.preservationStatus }
-      return <n-tag type={status.type}>{status.text}</n-tag>
+      return h(NTag, { type: status.type }, () => status.text)
     }
   },
   {
@@ -123,13 +124,13 @@ const columns = [
     title: '操作',
     key: 'actions',
     width: 200,
-    render: (row) => (
-      <n-space>
-        <n-button size="small" type="primary" onClick={() => goToDetail(row.id)}>详情</n-button>
-        <n-button size="small" onClick={() => goToEdit(row.id)}>编辑</n-button>
-        <n-button size="small" type="error" onClick={() => handleDelete(row.id, row.name)}>删除</n-button>
-      </n-space>
-    )
+    render: (row) => {
+      return h(NSpace, null, () => [
+        h(NButton, { size: 'small', type: 'primary', onClick: () => goToDetail(row.id) }, () => '详情'),
+        h(NButton, { size: 'small', onClick: () => goToEdit(row.id) }, () => '编辑'),
+        h(NButton, { size: 'small', type: 'error', onClick: () => handleDelete(row.id, row.name) }, () => '删除')
+      ])
+    }
   }
 ]
 

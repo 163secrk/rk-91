@@ -60,7 +60,7 @@
             </n-grid-item>
           </n-grid>
           <n-form-item label="描述">
-            <n-textarea v-model:value="formData.description" placeholder="请输入遗物描述" :rows="3" />
+            <n-input type="textarea" v-model:value="formData.description" placeholder="请输入遗物描述" :rows="3" />
           </n-form-item>
         </n-card>
 
@@ -98,7 +98,7 @@
           <n-grid :cols="3" :x-gap="24">
             <n-grid-item>
               <n-form-item label="X 坐标" path="coordinate.x">
-                <n-number-input
+                <n-input-number
                   v-model:value="formData.coordinate.x"
                   :min="-10000"
                   :max="10000"
@@ -109,7 +109,7 @@
             </n-grid-item>
             <n-grid-item>
               <n-form-item label="Y 坐标" path="coordinate.y">
-                <n-number-input
+                <n-input-number
                   v-model:value="formData.coordinate.y"
                   :min="-10000"
                   :max="10000"
@@ -120,7 +120,7 @@
             </n-grid-item>
             <n-grid-item>
               <n-form-item label="Z 坐标（深度）" path="coordinate.z">
-                <n-number-input
+                <n-input-number
                   v-model:value="formData.coordinate.z"
                   :min="-1000"
                   :max="1000"
@@ -146,7 +146,7 @@
 
         <n-card title="备注信息" class="card-margin">
           <n-form-item label="备注">
-            <n-textarea v-model:value="formData.remark" placeholder="其他需要记录的信息" :rows="3" />
+            <n-input type="textarea" v-model:value="formData.remark" placeholder="其他需要记录的信息" :rows="3" />
           </n-form-item>
         </n-card>
 
@@ -164,7 +164,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, useMessage } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useMessage } from 'naive-ui'
 import { useRouter, useRoute } from 'vue-router'
 import { relicApi } from '../api'
 

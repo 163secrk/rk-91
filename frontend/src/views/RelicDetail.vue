@@ -132,19 +132,19 @@
           <n-input v-model:value="restorationForm.operator" placeholder="请输入操作人员姓名" />
         </n-form-item>
         <n-form-item label="破损情况" path="damageDescription">
-          <n-textarea v-model:value="restorationForm.damageDescription" placeholder="请描述破损情况" :rows="2" />
+          <n-input type="textarea" v-model:value="restorationForm.damageDescription" placeholder="请描述破损情况" :rows="2" />
         </n-form-item>
         <n-form-item label="修复方法" path="restorationMethod">
-          <n-textarea v-model:value="restorationForm.restorationMethod" placeholder="请描述修复方法" :rows="3" />
+          <n-input type="textarea" v-model:value="restorationForm.restorationMethod" placeholder="请描述修复方法" :rows="3" />
         </n-form-item>
         <n-form-item label="使用材料">
-          <n-textarea v-model:value="restorationForm.materialsUsed" placeholder="请输入使用的材料" :rows="2" />
+          <n-input type="textarea" v-model:value="restorationForm.materialsUsed" placeholder="请输入使用的材料" :rows="2" />
         </n-form-item>
         <n-form-item label="修复效果">
-          <n-textarea v-model:value="restorationForm.restorationEffect" placeholder="请描述修复效果" :rows="2" />
+          <n-input type="textarea" v-model:value="restorationForm.restorationEffect" placeholder="请描述修复效果" :rows="2" />
         </n-form-item>
         <n-form-item label="备注">
-          <n-textarea v-model:value="restorationForm.remark" placeholder="其他备注信息" :rows="2" />
+          <n-input type="textarea" v-model:value="restorationForm.remark" placeholder="其他备注信息" :rows="2" />
         </n-form-item>
       </n-form>
       <template #footer>
@@ -158,7 +158,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, useMessage, useDialog } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useMessage, useDialog } from 'naive-ui'
 import { useRouter, useRoute } from 'vue-router'
 import { relicApi } from '../api'
 import { format } from 'date-fns'

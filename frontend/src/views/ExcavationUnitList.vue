@@ -24,25 +24,24 @@
         <n-button @click="handleReset">重置</n-button>
       </div>
 
-      <n-table
+      <n-data-table
         :columns="columns"
         :data="units"
         :loading="loading"
-        :pagination="pagination"
       />
+
     </n-card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, h, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, h, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
 import { excavationUnitApi } from '../api'
 import { format } from 'date-fns'
 
 const router = useRouter()
-const route = useRoute()
 const message = useMessage()
 const dialog = useDialog()
 
@@ -56,12 +55,6 @@ const searchOptions = [
   { label: '负责人', value: 'director' },
   { label: '状态', value: 'status' }
 ]
-
-const pagination = ref({
-  pageSize: 10,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50]
-})
 
 const statusMap = {
   '未开始': { type: 'default', text: '未开始' },
@@ -199,16 +192,9 @@ const goToEdit = (id) => {
   router.push(`/excavation-units/${id}/edit`)
 }
 
-watch(
-  () => route.fullPath,
-  () => {
-    if (route.name === 'ExcavationUnitList') {
-      loadUnits()
-    }
-  }
-)
-
 onMounted(() => {
-  loadUnits()
+  nextTick(() => {
+    loadUnits()
+  })
 })
 </script>

@@ -321,6 +321,13 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     const submitData = { ...formData }
+    // NaiveUI date-picker返回毫秒时间戳，Spring Boot LocalDate需要yyyy-MM-dd字符串
+    if (submitData.excavateDate && typeof submitData.excavateDate === 'number') {
+      const d = new Date(submitData.excavateDate)
+      submitData.excavateDate = d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0')
+    }
     if (isEdit.value) {
       await relicApi.updateRelic(formData.id, submitData)
       message.success('修改成功')

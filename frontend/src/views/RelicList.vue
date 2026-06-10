@@ -24,25 +24,23 @@
         <n-button @click="handleReset">重置</n-button>
       </div>
 
-      <n-table
+      <n-data-table
         :columns="columns"
         :data="relics"
         :loading="loading"
-        :pagination="pagination"
       />
     </n-card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, h, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, h, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
 import { relicApi, excavationUnitApi } from '../api'
 import { format } from 'date-fns'
 
 const router = useRouter()
-const route = useRoute()
 const message = useMessage()
 const dialog = useDialog()
 
@@ -57,12 +55,6 @@ const searchOptions = [
   { label: '编号', value: 'relicNo' },
   { label: '类别', value: 'category' }
 ]
-
-const pagination = ref({
-  pageSize: 10,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50]
-})
 
 const loadExcavationUnits = async () => {
   try {
@@ -234,18 +226,10 @@ const goToDetail = (id) => {
   router.push(`/relics/${id}`)
 }
 
-watch(
-  () => route.fullPath,
-  () => {
-    if (route.name === 'RelicList') {
-      loadExcavationUnits()
-      loadRelics()
-    }
-  }
-)
-
 onMounted(() => {
-  loadExcavationUnits()
-  loadRelics()
+  nextTick(() => {
+    loadExcavationUnits()
+    loadRelics()
+  })
 })
 </script>

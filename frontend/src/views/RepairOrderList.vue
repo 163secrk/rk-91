@@ -30,6 +30,9 @@
         />
         <n-button type="primary" @click="handleSearch">搜索</n-button>
         <n-button @click="handleReset">重置</n-button>
+        <n-button type="success" :loading="exporting" @click="handleExport">
+          导出Excel
+        </n-button>
       </div>
 
       <n-data-table
@@ -47,6 +50,8 @@ import { useRouter } from 'vue-router'
 import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
 import { repairOrderApi, relicApi } from '../api'
 import { format } from 'date-fns'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
 const router = useRouter()
 const message = useMessage()
@@ -54,6 +59,7 @@ const dialog = useDialog()
 
 const orders = ref([])
 const loading = ref(false)
+const exporting = ref(false)
 const searchField = ref('orderNo')
 const searchKeyword = ref('')
 const statusFilter = ref(null)
@@ -264,6 +270,75 @@ const goToEdit = (id) => {
 
 const goToDetail = (id) => {
   router.push(`/repair-orders/${id}`)
+}
+
+const getCurrentFilterParams = () => {
+  const params = {}
+  if (statusFilter.value) {
+    params.status = statusFilter.value
+  }
+  if (searchKeyword.value.trim()) {
+    params[searchField.value] = searchKeyword.value
+  }
+  return params
+}
+
+const statusTextMap = {
+  PENDING: '待修复',
+  IN_PROGRESS: '修复中',
+  COMPLETED: '已完成'
+}
+
+const transformOrderForExport = (order) => {
+  return {
+    '工单编号': order.orderNo || '',
+    '遗物编号': order.relicNo || '',
+    '遗物名称': order.relicName || '',
+    '状态': statusTextMap[order.status] || order.status || '',
+    '申请人': order.applicant || '',
+    '申请日期': formatDate(order.applyDate),
+    '修复人员': order.repairer || '',
+    '开始日期': formatDate(order.startDate),
+    '预计完成日期': formatDate(order.expectedCompleteDate),
+    '实际完成日期': formatDate(order.actualCompleteDate),
+    '破损情况': order.damageDescription || '',
+    '修复要求': order.repairRequirement || '',
+    '修复过程': order.repairProcess || '',
+    '修复结果': order.repairResult || '',
+    '备注': order.remark || ''
+  }
+}
+
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    const params = getCurrentFilterParams()
+    let res
+    if (Object.keys(params).length > 0) {
+      res = await repairOrderApi.searchOrders(params)
+    } else {
+      res = await repairOrderApi.getAllOrders()
+    }
+    const data = res.data || []
+    if (data.length === 0) {
+      message.warning('暂无数据可导出')
+      return
+    }
+    const exportData = data.map(transformOrderForExport)
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, '修复工单列表')
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' })
+    const fileName = `修复工单列表_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`
+    saveAs(blob, fileName)
+    message.success(`导出成功，共 ${data.length} 条记录`)
+  } catch (e) {
+    console.error('导出失败', e)
+    message.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 onMounted(() => {

@@ -22,6 +22,9 @@
         />
         <n-button type="primary" @click="handleSearch">搜索</n-button>
         <n-button @click="handleReset">重置</n-button>
+        <n-button type="success" :loading="exporting" @click="handleExport">
+          导出Excel
+        </n-button>
       </div>
 
       <n-data-table
@@ -40,6 +43,8 @@ import { useRouter } from 'vue-router'
 import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
 import { excavationUnitApi } from '../api'
 import { format } from 'date-fns'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
 const router = useRouter()
 const message = useMessage()
@@ -47,6 +52,7 @@ const dialog = useDialog()
 
 const units = ref([])
 const loading = ref(false)
+const exporting = ref(false)
 const searchField = ref('unitNo')
 const searchKeyword = ref('')
 
@@ -190,6 +196,62 @@ const goToCreate = () => {
 
 const goToEdit = (id) => {
   router.push(`/excavation-units/${id}/edit`)
+}
+
+const getCurrentFilterParams = () => {
+  const params = {}
+  if (searchKeyword.value.trim()) {
+    params[searchField.value] = searchKeyword.value
+  }
+  return params
+}
+
+const transformUnitForExport = (unit) => {
+  return {
+    '探方编号': unit.unitNo || '',
+    '位置': unit.location || '',
+    '长度(米)': unit.length || '',
+    '宽度(米)': unit.width || '',
+    '深度(米)': unit.depth || '',
+    '尺寸': `${unit.length || 0} × ${unit.width || 0}${unit.depth ? ` × ${unit.depth}` : ''} m`,
+    '发掘状态': unit.status || '',
+    '负责人': unit.director || '',
+    '出土遗物数': unit.relics ? unit.relics.length : 0,
+    '备注': unit.remark || '',
+    '创建时间': formatDate(unit.createTime)
+  }
+}
+
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    const params = getCurrentFilterParams()
+    let res
+    if (Object.keys(params).length > 0) {
+      res = await excavationUnitApi.searchUnits(params)
+    } else {
+      res = await excavationUnitApi.getAllUnits()
+    }
+    const data = res.data || []
+    if (data.length === 0) {
+      message.warning('暂无数据可导出')
+      return
+    }
+    const exportData = data.map(transformUnitForExport)
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, '探方列表')
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' })
+    const fileName = `探方列表_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`
+    saveAs(blob, fileName)
+    message.success(`导出成功，共 ${data.length} 条记录`)
+  } catch (e) {
+    console.error('导出失败', e)
+    message.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 onMounted(() => {

@@ -30,6 +30,9 @@
         />
         <n-button type="primary" @click="handleSearch">搜索</n-button>
         <n-button @click="handleReset">重置</n-button>
+        <n-button type="success" :loading="exporting" @click="handleExport">
+          导出Excel
+        </n-button>
       </div>
 
       <n-data-table
@@ -47,6 +50,8 @@ import { useRouter } from 'vue-router'
 import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
 import { relicApi, excavationUnitApi } from '../api'
 import { format } from 'date-fns'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
 const router = useRouter()
 const message = useMessage()
@@ -54,6 +59,7 @@ const dialog = useDialog()
 
 const relics = ref([])
 const loading = ref(false)
+const exporting = ref(false)
 const searchField = ref('name')
 const searchKeyword = ref('')
 const excavationUnitMap = ref({})
@@ -266,6 +272,73 @@ const goToEdit = (id) => {
 
 const goToDetail = (id) => {
   router.push(`/relics/${id}`)
+}
+
+const getCurrentFilterParams = () => {
+  const params = {}
+  if (selectedExcavationUnit.value) {
+    params.excavationUnitId = selectedExcavationUnit.value
+  }
+  if (searchKeyword.value.trim()) {
+    params[searchField.value] = searchKeyword.value
+  }
+  return params
+}
+
+const transformRelicForExport = (relic) => {
+  return {
+    '编号': relic.relicNo || '',
+    '名称': relic.name || '',
+    '类别': relic.category || '',
+    '材质': relic.material || '',
+    '年代': relic.era || '',
+    '所属探方': (relic.excavationUnitId && excavationUnitMap.value[relic.excavationUnitId]) ? excavationUnitMap.value[relic.excavationUnitId] : '',
+    '出土地点': relic.excavationSite || '',
+    '出土日期': formatDate(relic.excavateDate),
+    '发掘人员': relic.excavator || '',
+    '地层': relic.stratum || '',
+    '保存状态': relic.preservationStatus || '',
+    '三维坐标_X': relic.coordinate ? (relic.coordinate.x || '') : '',
+    '三维坐标_Y': relic.coordinate ? (relic.coordinate.y || '') : '',
+    '三维坐标_Z': relic.coordinate ? (relic.coordinate.z || '') : '',
+    '坐标系': relic.coordinate ? (relic.coordinate.coordinateSystem || '') : '',
+    '坐标备注': relic.coordinate ? (relic.coordinate.remark || '') : '',
+    '描述': relic.description || '',
+    '备注': relic.remark || '',
+    '登记时间': formatDate(relic.createTime)
+  }
+}
+
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    const params = getCurrentFilterParams()
+    let res
+    if (Object.keys(params).length > 0) {
+      res = await relicApi.searchRelics(params)
+    } else {
+      res = await relicApi.getAllRelics()
+    }
+    const data = res.data || []
+    if (data.length === 0) {
+      message.warning('暂无数据可导出')
+      return
+    }
+    const exportData = data.map(transformRelicForExport)
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, '遗物列表')
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' })
+    const fileName = `遗物列表_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`
+    saveAs(blob, fileName)
+    message.success(`导出成功，共 ${data.length} 条记录`)
+  } catch (e) {
+    console.error('导出失败', e)
+    message.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 onMounted(() => {

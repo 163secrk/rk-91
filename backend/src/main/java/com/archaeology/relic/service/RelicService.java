@@ -160,4 +160,38 @@ public class RelicService {
     public List<Object[]> countByPreservationStatus() {
         return relicRepository.countByPreservationStatus();
     }
+
+    public List<Integer> getAvailableYears() {
+        return relicRepository.findDistinctYears();
+    }
+
+    public List<Object[]> countByMonth(Integer year) {
+        return relicRepository.countByMonth(year);
+    }
+
+    public List<Object[]> countByCategoryByYear(Integer year) {
+        return relicRepository.countByCategoryByYear(year);
+    }
+
+    public List<Object[]> countByEraByYear(Integer year) {
+        return relicRepository.countByEraByYear(year);
+    }
+
+    public List<Object[]> countByMaterialByYear(Integer year) {
+        return relicRepository.countByMaterialByYear(year);
+    }
+
+    public List<Object[]> countByPreservationStatusByYear(Integer year) {
+        return relicRepository.countByPreservationStatusByYear(year);
+    }
+
+    public long countByYear(Integer year) {
+        return relicRepository.countByYear(year);
+    }
+
+    public List<Relic> searchByExcavationUnitId(Long excavationUnitId) {
+        return relicRepository.findByExcavationUnitId(excavationUnitId).stream()
+                .peek(this::setExcavationUnitId)
+                .collect(Collectors.toList());
+    }
 }

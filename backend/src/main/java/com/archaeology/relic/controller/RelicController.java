@@ -35,8 +35,11 @@ public class RelicController {
     public List<Relic> searchRelics(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String relicNo,
-            @RequestParam(required = false) String category) {
-        if (name != null && !name.isEmpty()) {
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Long excavationUnitId) {
+        if (excavationUnitId != null) {
+            return relicService.searchByExcavationUnitId(excavationUnitId);
+        } else if (name != null && !name.isEmpty()) {
             return relicService.searchByName(name);
         } else if (relicNo != null && !relicNo.isEmpty()) {
             return relicService.searchByRelicNo(relicNo);
@@ -91,10 +94,21 @@ public class RelicController {
     }
 
     @GetMapping("/statistics")
-    public ResponseEntity<Map<String, Object>> getStatistics() {
+    public ResponseEntity<Map<String, Object>> getStatistics(
+            @RequestParam(required = false) Integer year) {
+
         Map<String, Object> result = new HashMap<>();
 
-        List<Map<String, Object>> categoryStats = relicService.countByCategory().stream()
+        List<Object[]> categoryData = (year != null)
+                ? relicService.countByCategoryByYear(year) : relicService.countByCategory();
+        List<Object[]> eraData = (year != null)
+                ? relicService.countByEraByYear(year) : relicService.countByEra();
+        List<Object[]> materialData = (year != null)
+                ? relicService.countByMaterialByYear(year) : relicService.countByMaterial();
+        List<Object[]> statusData = (year != null)
+                ? relicService.countByPreservationStatusByYear(year) : relicService.countByPreservationStatus();
+
+        List<Map<String, Object>> categoryStats = categoryData.stream()
                 .map(arr -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("name", arr[0] != null ? arr[0].toString() : "未分类");
@@ -103,7 +117,7 @@ public class RelicController {
                 })
                 .toList();
 
-        List<Map<String, Object>> eraStats = relicService.countByEra().stream()
+        List<Map<String, Object>> eraStats = eraData.stream()
                 .map(arr -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("name", arr[0] != null ? arr[0].toString() : "未知年代");
@@ -112,7 +126,7 @@ public class RelicController {
                 })
                 .toList();
 
-        List<Map<String, Object>> materialStats = relicService.countByMaterial().stream()
+        List<Map<String, Object>> materialStats = materialData.stream()
                 .map(arr -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("name", arr[0] != null ? arr[0].toString() : "未知材质");
@@ -121,7 +135,7 @@ public class RelicController {
                 })
                 .toList();
 
-        List<Map<String, Object>> statusStats = relicService.countByPreservationStatus().stream()
+        List<Map<String, Object>> statusStats = statusData.stream()
                 .map(arr -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("name", arr[0] != null ? arr[0].toString() : "未知状态");
@@ -130,14 +144,42 @@ public class RelicController {
                 })
                 .toList();
 
-        long total = categoryStats.stream().mapToLong(m -> (Long) m.get("value")).sum();
+        long total = (year != null)
+                ? relicService.countByYear(year)
+                : categoryStats.stream().mapToLong(m -> (Long) m.get("value")).sum();
+
+        List<Map<String, Object>> monthStats = new java.util.ArrayList<>();
+        if (year != null) {
+            List<Object[]> monthData = relicService.countByMonth(year);
+            for (int m = 1; m <= 12; m++) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("month", m);
+                map.put("name", m + "月");
+                map.put("value", 0L);
+                monthStats.add(map);
+            }
+            for (Object[] arr : monthData) {
+                int month = ((Number) arr[0]).intValue();
+                long count = ((Number) arr[1]).longValue();
+                monthStats.get(month - 1).put("value", count);
+            }
+        }
 
         result.put("total", total);
         result.put("byCategory", categoryStats);
         result.put("byEra", eraStats);
         result.put("byMaterial", materialStats);
         result.put("byPreservationStatus", statusStats);
+        if (year != null) {
+            result.put("byMonth", monthStats);
+        }
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/statistics/years")
+    public ResponseEntity<List<Integer>> getAvailableYears() {
+        List<Integer> years = relicService.getAvailableYears();
+        return ResponseEntity.ok(years);
     }
 }

@@ -10,6 +10,14 @@
     <n-card class="card-margin">
       <div class="search-bar">
         <n-select
+          v-model:value="selectedExcavationUnit"
+          :options="excavationUnitOptions"
+          placeholder="全部探方"
+          clearable
+          style="width: 180px"
+          @update:value="handleExcavationUnitFilter"
+        />
+        <n-select
           v-model:value="searchField"
           :options="searchOptions"
           style="width: 150px"
@@ -49,6 +57,8 @@ const loading = ref(false)
 const searchField = ref('name')
 const searchKeyword = ref('')
 const excavationUnitMap = ref({})
+const excavationUnitOptions = ref([])
+const selectedExcavationUnit = ref(null)
 
 const searchOptions = [
   { label: '名称', value: 'name' },
@@ -60,10 +70,13 @@ const loadExcavationUnits = async () => {
   try {
     const res = await excavationUnitApi.getAllUnits()
     const map = {}
+    const options = []
     res.data.forEach(unit => {
       map[unit.id] = unit.unitNo
+      options.push({ label: unit.unitNo, value: unit.id })
     })
     excavationUnitMap.value = map
+    excavationUnitOptions.value = options
   } catch (e) {
     console.error('加载探方列表失败', e)
   }
@@ -174,6 +187,18 @@ const loadRelics = async () => {
 }
 
 const handleSearch = async () => {
+  if (selectedExcavationUnit.value) {
+    loading.value = true
+    try {
+      const res = await relicApi.searchRelics({ excavationUnitId: selectedExcavationUnit.value })
+      relics.value = res.data
+    } catch (e) {
+      message.error('搜索失败')
+    } finally {
+      loading.value = false
+    }
+    return
+  }
   if (!searchKeyword.value.trim()) {
     loadRelics()
     return
@@ -191,8 +216,25 @@ const handleSearch = async () => {
   }
 }
 
+const handleExcavationUnitFilter = async () => {
+  if (selectedExcavationUnit.value) {
+    loading.value = true
+    try {
+      const res = await relicApi.searchRelics({ excavationUnitId: selectedExcavationUnit.value })
+      relics.value = res.data
+    } catch (e) {
+      message.error('按探方筛选失败')
+    } finally {
+      loading.value = false
+    }
+  } else {
+    loadRelics()
+  }
+}
+
 const handleReset = () => {
   searchKeyword.value = ''
+  selectedExcavationUnit.value = null
   loadRelics()
 }
 

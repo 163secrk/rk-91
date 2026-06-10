@@ -2,9 +2,19 @@
   <div class="page-container">
     <div class="page-header">
       <h1 class="page-title">遗物统计看板</h1>
-      <n-button @click="loadStatistics">
-        刷新数据
-      </n-button>
+      <div class="header-actions">
+        <n-select
+          v-model:value="selectedYear"
+          :options="yearOptions"
+          placeholder="选择出土年份"
+          clearable
+          style="width: 160px"
+          @update:value="handleYearChange"
+        />
+        <n-button @click="loadStatistics">
+          刷新数据
+        </n-button>
+      </div>
     </div>
 
     <n-grid :cols="4" :x-gap="16" class="stats-cards">
@@ -16,7 +26,7 @@
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.total || 0 }}</div>
-              <div class="stat-label">遗物总数</div>
+              <div class="stat-label">遗物总数{{ selectedYear ? '（' + selectedYear + '年）' : '' }}</div>
             </div>
           </div>
         </n-card>
@@ -58,6 +68,14 @@
               <div class="stat-label">材质数</div>
             </div>
           </div>
+        </n-card>
+      </n-grid-item>
+    </n-grid>
+
+    <n-grid v-if="selectedYear && statistics.byMonth" :cols="1" class="chart-row">
+      <n-grid-item>
+        <n-card :title="'出土月份趋势（' + selectedYear + '年）'" class="chart-card">
+          <div ref="monthTrendChart" class="chart-container"></div>
         </n-card>
       </n-grid-item>
     </n-grid>
@@ -126,14 +144,19 @@ import { relicApi } from '../api'
 const message = useMessage()
 
 const loading = ref(false)
+const selectedYear = ref(null)
+const yearOptions = ref([])
+
 const statistics = reactive({
   total: 0,
   byCategory: [],
   byEra: [],
   byMaterial: [],
-  byPreservationStatus: []
+  byPreservationStatus: [],
+  byMonth: null
 })
 
+const monthTrendChart = ref(null)
 const categoryBarChart = ref(null)
 const categoryPieChart = ref(null)
 const eraBarChart = ref(null)
@@ -150,6 +173,71 @@ const statusColorMap = {
   '轻微破损': '#f0a020',
   '严重破损': '#d03050',
   '已修复': '#2080f0'
+}
+
+const createLineChart = (el, data) => {
+  const chart = echarts.init(el)
+  chartInstances.push(chart)
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params) => {
+        const item = params[0]
+        return `${item.name}<br/>遗物数量: ${item.value}`
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: data.map(item => item.name),
+      axisLabel: {
+        interval: 0,
+        fontSize: 12
+      }
+    },
+    yAxis: {
+      type: 'value',
+      minInterval: 1
+    },
+    series: [
+      {
+        type: 'line',
+        data: data.map(item => item.value),
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        lineStyle: {
+          color: '#667eea',
+          width: 3
+        },
+        itemStyle: {
+          color: '#667eea'
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(102, 126, 234, 0.3)' },
+            { offset: 1, color: 'rgba(102, 126, 234, 0.05)' }
+          ])
+        },
+        label: {
+          show: true,
+          position: 'top',
+          fontSize: 12,
+          formatter: (params) => params.value > 0 ? params.value : ''
+        }
+      }
+    ]
+  }
+
+  chart.setOption(option)
+  return chart
 }
 
 const createBarChart = (el, data, color) => {
@@ -281,6 +369,10 @@ const initCharts = async () => {
 
   disposeCharts()
 
+  if (selectedYear.value && statistics.byMonth && monthTrendChart.value) {
+    createLineChart(monthTrendChart.value, statistics.byMonth)
+  }
+
   if (statistics.byCategory?.length > 0) {
     createBarChart(categoryBarChart.value, statistics.byCategory, '#667eea')
     createPieChart(categoryPieChart.value, statistics.byCategory)
@@ -302,15 +394,29 @@ const initCharts = async () => {
   }
 }
 
+const loadAvailableYears = async () => {
+  try {
+    const res = await relicApi.getAvailableYears()
+    yearOptions.value = (res.data || []).map(y => ({ label: y + '年', value: y }))
+  } catch (e) {
+    console.error('加载可用年份失败', e)
+  }
+}
+
 const loadStatistics = async () => {
   loading.value = true
   try {
-    const res = await relicApi.getStatistics()
+    const params = {}
+    if (selectedYear.value) {
+      params.year = selectedYear.value
+    }
+    const res = await relicApi.getStatistics(params)
     statistics.total = res.data.total
     statistics.byCategory = res.data.byCategory || []
     statistics.byEra = res.data.byEra || []
     statistics.byMaterial = res.data.byMaterial || []
     statistics.byPreservationStatus = res.data.byPreservationStatus || []
+    statistics.byMonth = res.data.byMonth || null
     await initCharts()
     message.success('数据加载成功')
   } catch (e) {
@@ -320,6 +426,10 @@ const loadStatistics = async () => {
   }
 }
 
+const handleYearChange = () => {
+  loadStatistics()
+}
+
 const handleResize = () => {
   chartInstances.forEach(chart => {
     chart.resize()
@@ -327,6 +437,7 @@ const handleResize = () => {
 }
 
 onMounted(() => {
+  loadAvailableYears()
   loadStatistics()
   window.addEventListener('resize', handleResize)
 })
@@ -349,6 +460,12 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .page-title {

@@ -190,7 +190,7 @@ public class RelicService {
     }
 
     public List<Relic> searchByExcavationUnitId(Long excavationUnitId) {
-        return relicRepository.findByExcavationUnitId(excavationUnitId).stream()
+        return relicRepository.findByExcavationUnit_Id(excavationUnitId).stream()
                 .peek(this::setExcavationUnitId)
                 .collect(Collectors.toList());
     }

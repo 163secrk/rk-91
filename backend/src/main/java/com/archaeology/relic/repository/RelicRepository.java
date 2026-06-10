@@ -50,5 +50,5 @@ public interface RelicRepository extends JpaRepository<Relic, Long> {
     @Query("SELECT COUNT(r) FROM Relic r WHERE FUNCTION('YEAR', r.excavateDate) = :year")
     long countByYear(@Param("year") Integer year);
 
-    List<Relic> findByExcavationUnitId(Long excavationUnitId);
+    List<Relic> findByExcavationUnit_Id(Long excavationUnitId);
 }

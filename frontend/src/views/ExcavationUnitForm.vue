@@ -118,20 +118,27 @@ const statusOptions = [
   { label: '已完成', value: '已完成' }
 ]
 
+const validateNumber = (rule, value) => {
+  if (value === null || value === undefined || value === '') {
+    return new Error(rule.message)
+  }
+  return true
+}
+
 const rules = {
   unitNo: [{ required: true, message: '请输入探方编号', trigger: 'blur' }],
   director: [{ required: true, message: '请输入负责人', trigger: 'blur' }],
   status: [{ required: true, message: '请选择发掘状态', trigger: 'change' }],
-  length: [{ required: true, message: '请输入长度', trigger: 'blur' }],
-  width: [{ required: true, message: '请输入宽度', trigger: 'blur' }]
+  length: [{ validator: validateNumber, message: '请输入长度', trigger: 'blur' }],
+  width: [{ validator: validateNumber, message: '请输入宽度', trigger: 'blur' }]
 }
 
 const formData = reactive({
   id: null,
   unitNo: '',
   location: '',
-  length: 5,
-  width: 5,
+  length: null,
+  width: null,
   depth: null,
   status: '未开始',
   director: '',

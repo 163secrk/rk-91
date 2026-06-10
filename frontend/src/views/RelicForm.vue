@@ -259,10 +259,17 @@ const validateNumber = (rule, value) => {
   return true
 }
 
+const validateDate = (rule, value) => {
+  if (value === null || value === undefined || value === '') {
+    return new Error(rule.message)
+  }
+  return true
+}
+
 const rules = {
   relicNo: [{ required: true, message: '请输入遗物编号', trigger: 'blur' }],
   name: [{ required: true, message: '请输入遗物名称', trigger: 'blur' }],
-  excavateDate: [{ required: true, message: '请选择出土日期', trigger: 'change' }],
+  excavateDate: [{ validator: validateDate, message: '请选择出土日期', trigger: 'change' }],
   excavator: [{ required: true, message: '请输入发掘人员', trigger: 'blur' }],
   'coordinate.x': [{ validator: validateNumber, message: '请输入X坐标', trigger: 'blur' }],
   'coordinate.y': [{ validator: validateNumber, message: '请输入Y坐标', trigger: 'blur' }],

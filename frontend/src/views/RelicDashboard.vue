@@ -117,11 +117,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import * as echarts from 'echarts'
 import { relicApi } from '../api'
 
+const route = useRoute()
 const message = useMessage()
 
 const loading = ref(false)
@@ -324,6 +326,15 @@ const handleResize = () => {
     chart.resize()
   })
 }
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (route.name === 'RelicDashboard') {
+      loadStatistics()
+    }
+  }
+)
 
 onMounted(() => {
   loadStatistics()

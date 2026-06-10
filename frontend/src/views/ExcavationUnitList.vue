@@ -35,13 +35,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, h, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
 import { excavationUnitApi } from '../api'
 import { format } from 'date-fns'
 
 const router = useRouter()
+const route = useRoute()
 const message = useMessage()
 const dialog = useDialog()
 
@@ -197,6 +198,15 @@ const goToCreate = () => {
 const goToEdit = (id) => {
   router.push(`/excavation-units/${id}/edit`)
 }
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (route.name === 'ExcavationUnitList') {
+      loadUnits()
+    }
+  }
+)
 
 onMounted(() => {
   loadUnits()

@@ -35,13 +35,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, h, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
 import { relicApi, excavationUnitApi } from '../api'
 import { format } from 'date-fns'
 
 const router = useRouter()
+const route = useRoute()
 const message = useMessage()
 const dialog = useDialog()
 
@@ -232,6 +233,16 @@ const goToEdit = (id) => {
 const goToDetail = (id) => {
   router.push(`/relics/${id}`)
 }
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (route.name === 'RelicList') {
+      loadExcavationUnits()
+      loadRelics()
+    }
+  }
+)
 
 onMounted(() => {
   loadExcavationUnits()

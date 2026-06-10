@@ -5,6 +5,9 @@ import RelicDetail from '../views/RelicDetail.vue'
 import RelicDashboard from '../views/RelicDashboard.vue'
 import ExcavationUnitList from '../views/ExcavationUnitList.vue'
 import ExcavationUnitForm from '../views/ExcavationUnitForm.vue'
+import RepairOrderList from '../views/RepairOrderList.vue'
+import RepairOrderForm from '../views/RepairOrderForm.vue'
+import RepairOrderDetail from '../views/RepairOrderDetail.vue'
 
 const routes = [
   {
@@ -52,6 +55,28 @@ const routes = [
     path: '/relics/:id',
     name: 'RelicDetail',
     component: RelicDetail,
+    props: true
+  },
+  {
+    path: '/repair-orders',
+    name: 'RepairOrderList',
+    component: RepairOrderList
+  },
+  {
+    path: '/repair-orders/new',
+    name: 'RepairOrderCreate',
+    component: RepairOrderForm
+  },
+  {
+    path: '/repair-orders/:id/edit',
+    name: 'RepairOrderEdit',
+    component: RepairOrderForm,
+    props: true
+  },
+  {
+    path: '/repair-orders/:id',
+    name: 'RepairOrderDetail',
+    component: RepairOrderDetail,
     props: true
   }
 ]

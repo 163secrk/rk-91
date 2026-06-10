@@ -33,4 +33,16 @@ export const excavationUnitApi = {
   getStatistics: () => api.get('/excavation-units/statistics')
 }
 
+export const repairOrderApi = {
+  getAllOrders: () => api.get('/repair-orders'),
+  getOrderById: (id) => api.get(`/repair-orders/${id}`),
+  searchOrders: (params) => api.get('/repair-orders/search', { params }),
+  createOrder: (data) => api.post('/repair-orders', data),
+  updateOrder: (id, data) => api.put(`/repair-orders/${id}`, data),
+  deleteOrder: (id) => api.delete(`/repair-orders/${id}`),
+  startRepair: (id, data) => api.post(`/repair-orders/${id}/start`, data),
+  completeRepair: (id, data) => api.post(`/repair-orders/${id}/complete`, data),
+  getStatusStatistics: () => api.get('/repair-orders/statistics')
+}
+
 export default api

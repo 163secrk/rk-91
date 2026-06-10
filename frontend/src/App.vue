@@ -12,6 +12,9 @@
             <n-button @click="goUnits" quaternary>
               探方管理
             </n-button>
+            <n-button @click="goRepairOrders" quaternary>
+              修复工单
+            </n-button>
             <n-button @click="goDashboard" quaternary>
               统计看板
             </n-button>
@@ -35,6 +38,10 @@ const goHome = () => {
 
 const goUnits = () => {
   router.push('/excavation-units')
+}
+
+const goRepairOrders = () => {
+  router.push('/repair-orders')
 }
 
 const goDashboard = () => {

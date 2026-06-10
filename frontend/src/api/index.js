@@ -19,7 +19,12 @@ export const relicApi = {
   addRestorationRecord: (relicId, data) => api.post(`/relics/${relicId}/restoration-records`, data),
   deleteRestorationRecord: (recordId) => api.delete(`/relics/restoration-records/${recordId}`),
   getStatistics: (params) => api.get('/relics/statistics', { params }),
-  getAvailableYears: () => api.get('/relics/statistics/years')
+  getAvailableYears: () => api.get('/relics/statistics/years'),
+  batchImport: (formData, onUploadProgress) => api.post('/relics/batch-import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress
+  }),
+  downloadTemplate: () => api.get('/relics/template', { responseType: 'blob' })
 }
 
 export const excavationUnitApi = {

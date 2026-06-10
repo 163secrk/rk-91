@@ -32,6 +32,11 @@ body {
   color: #303133;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
 .search-bar {
   display: flex;
   gap: 12px;

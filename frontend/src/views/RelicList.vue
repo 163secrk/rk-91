@@ -2,9 +2,14 @@
   <div class="page-container">
     <div class="page-header">
       <h1 class="page-title">出土遗物列表</h1>
-      <n-button type="primary" @click="goToCreate">
-        新增遗物登记
-      </n-button>
+      <div class="header-actions">
+        <n-button @click="showImportModal = true">
+          批量导入
+        </n-button>
+        <n-button type="primary" @click="goToCreate">
+          新增遗物登记
+        </n-button>
+      </div>
     </div>
 
     <n-card class="card-margin">
@@ -41,13 +46,98 @@
         :loading="loading"
       />
     </n-card>
+
+    <n-modal
+      v-model:show="showImportModal"
+      preset="card"
+      title="批量导入遗物"
+      :mask-closable="false"
+      :close-on-esc="true"
+      style="width: 600px"
+    >
+      <div class="import-modal-content">
+        <n-alert type="info" :show-icon="true" style="margin-bottom: 16px">
+          <template #header>导入说明</template>
+          <ol style="margin: 0; padding-left: 20px">
+            <li>请先下载并按照模板格式填写遗物数据</li>
+            <li>标有 <n-tag size="small" type="warning">*</n-tag> 的字段为必填项</li>
+            <li>所属探方请填写已存在的探方编号</li>
+            <li>出土日期格式请使用 yyyy-MM-dd</li>
+            <li>保存状态可选：完好、轻微破损、严重破损、已修复</li>
+            <li>仅支持 .xlsx 和 .xls 格式的Excel文件</li>
+          </ol>
+        </n-alert>
+
+        <div class="import-actions" style="margin-bottom: 16px">
+          <n-button type="primary" ghost @click="handleDownloadTemplate">
+            下载导入模板
+          </n-button>
+        </div>
+
+        <n-upload
+          :show-file-list="true"
+          :max="1"
+          accept=".xlsx,.xls"
+          :custom-request="handleCustomUpload"
+          :disabled="importing"
+        >
+          <n-button>
+            选择Excel文件
+          </n-button>
+          <template #trigger>
+            <n-button :disabled="importing">
+              选择Excel文件
+            </n-button>
+          </template>
+        </n-upload>
+
+        <div v-if="importing" style="margin-top: 16px">
+          <n-progress type="line" :percentage="importProgress" :show-indicator="true" />
+        </div>
+
+        <div v-if="importResult" class="import-result" style="margin-top: 16px">
+          <n-space vertical>
+            <n-descriptions bordered :column="1" size="small">
+              <n-descriptions-item label="总计">
+                <n-tag type="default">{{ importResult.total }} 条</n-tag>
+              </n-descriptions-item>
+              <n-descriptions-item label="成功">
+                <n-tag type="success">{{ importResult.success }} 条</n-tag>
+              </n-descriptions-item>
+              <n-descriptions-item label="失败">
+                <n-tag type="error">{{ importResult.failed }} 条</n-tag>
+              </n-descriptions-item>
+            </n-descriptions>
+
+            <div v-if="importResult.errors && importResult.errors.length > 0" class="error-list">
+              <n-alert type="error" :show-icon="true">
+                <template #header>错误详情</template>
+                <div style="max-height: 200px; overflow-y: auto">
+                  <ul style="margin: 0; padding-left: 20px">
+                    <li v-for="(err, idx) in importResult.errors" :key="idx">
+                      第 {{ err.row }} 行：{{ err.message }}
+                    </li>
+                  </ul>
+                </div>
+              </n-alert>
+            </div>
+          </n-space>
+        </div>
+      </div>
+
+      <template #footer>
+        <n-space justify="end">
+          <n-button @click="handleCloseImportModal">关闭</n-button>
+        </n-space>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, h, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { NTag, NSpace, NButton, useMessage, useDialog } from 'naive-ui'
+import { NTag, NSpace, NButton, useMessage, useDialog, NDescriptions, NDescriptionsItem } from 'naive-ui'
 import { relicApi, excavationUnitApi } from '../api'
 import { format } from 'date-fns'
 import * as XLSX from 'xlsx'
@@ -65,6 +155,11 @@ const searchKeyword = ref('')
 const excavationUnitMap = ref({})
 const excavationUnitOptions = ref([])
 const selectedExcavationUnit = ref(null)
+
+const showImportModal = ref(false)
+const importing = ref(false)
+const importProgress = ref(0)
+const importResult = ref(null)
 
 const searchOptions = [
   { label: '名称', value: 'name' },
@@ -347,4 +442,101 @@ onMounted(() => {
     loadRelics()
   })
 })
+
+const handleDownloadTemplate = async () => {
+  try {
+    const res = await relicApi.downloadTemplate()
+    const blob = new Blob([res.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const contentDisposition = res.headers['content-disposition'] || res.headers['Content-Disposition']
+    let fileName = '遗物批量导入模板.xlsx'
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename\*=UTF-8''(.+)/i)
+      if (match && match[1]) {
+        fileName = decodeURIComponent(match[1])
+      } else {
+        const match2 = contentDisposition.match(/filename="?(.+?)"?$/i)
+        if (match2 && match2[1]) {
+          fileName = decodeURIComponent(match2[1])
+        }
+      }
+    }
+    saveAs(blob, fileName)
+    message.success('模板下载成功')
+  } catch (e) {
+    console.error('下载模板失败', e)
+    message.error('下载模板失败')
+  }
+}
+
+const handleCustomUpload = async ({ file, onFinish, onError }) => {
+  if (!file || !file.file) {
+    onError && onError()
+    return
+  }
+
+  const rawFile = file.file
+  if (!rawFile.name.toLowerCase().endsWith('.xlsx') && !rawFile.name.toLowerCase().endsWith('.xls')) {
+    message.error('只支持 .xlsx 或 .xls 格式的Excel文件')
+    onError && onError()
+    return
+  }
+
+  importing.value = true
+  importProgress.value = 0
+  importResult.value = null
+
+  try {
+    const formData = new FormData()
+    formData.append('file', rawFile)
+
+    const res = await relicApi.batchImport(formData, (progressEvent) => {
+      if (progressEvent.total) {
+        importProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+      }
+    })
+
+    if (res.data && res.data.success) {
+      importResult.value = {
+        total: res.data.total || 0,
+        success: res.data.success || 0,
+        failed: res.data.failed || 0,
+        errors: res.data.errors || []
+      }
+      importProgress.value = 100
+      onFinish && onFinish()
+
+      if (res.data.success > 0) {
+        message.success(`导入完成：成功 ${res.data.success} 条${res.data.failed > 0 ? `，失败 ${res.data.failed} 条` : ''}`)
+        loadRelics()
+      } else {
+        message.warning(`导入完成，但没有成功的数据，请检查错误详情`)
+      }
+    } else {
+      message.error(res.data?.message || '导入失败')
+      onError && onError()
+    }
+  } catch (e) {
+    console.error('导入失败', e)
+    if (e.response && e.response.data && e.response.data.message) {
+      message.error('导入失败：' + e.response.data.message)
+    } else {
+      message.error('导入失败，请检查文件格式')
+    }
+    onError && onError()
+  } finally {
+    importing.value = false
+  }
+}
+
+const handleCloseImportModal = () => {
+  if (importing.value) {
+    message.warning('正在导入中，请稍候...')
+    return
+  }
+  showImportModal.value = false
+  importResult.value = null
+  importProgress.value = 0
+}
 </script>

@@ -3,10 +3,21 @@ package com.archaeology.relic.controller;
 import com.archaeology.relic.entity.Relic;
 import com.archaeology.relic.entity.RestorationRecord;
 import com.archaeology.relic.service.RelicService;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -181,5 +192,55 @@ public class RelicController {
     public ResponseEntity<List<Integer>> getAvailableYears() {
         List<Integer> years = relicService.getAvailableYears();
         return ResponseEntity.ok(years);
+    }
+
+    @PostMapping(value = "/batch-import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, Object>> batchImportRelics(
+            @RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "请上传Excel文件");
+                return ResponseEntity.badRequest().body(errorResult);
+            }
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || (!originalFilename.toLowerCase().endsWith(".xlsx")
+                    && !originalFilename.toLowerCase().endsWith(".xls"))) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "只支持 .xlsx 或 .xls 格式的Excel文件");
+                return ResponseEntity.badRequest().body(errorResult);
+            }
+            Map<String, Object> result = relicService.batchImportFromExcel(file);
+            result.put("success", true);
+            return ResponseEntity.ok(result);
+        } catch (IOException e) {
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "文件读取失败: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResult);
+        } catch (Exception e) {
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "导入失败: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResult);
+        }
+    }
+
+    @GetMapping("/template")
+    public void downloadTemplate(HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        String fileName = "遗物批量导入模板_" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.name()).replaceAll("\\+", "%20");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName);
+
+        Workbook workbook = relicService.generateTemplate();
+        try (OutputStream out = response.getOutputStream()) {
+            workbook.write(out);
+            out.flush();
+        } finally {
+            workbook.close();
+        }
     }
 }
